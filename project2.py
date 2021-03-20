@@ -56,15 +56,14 @@ def set_lat_lon_from_x_y(flight):
     return flight
 
 
-FLIGHT_ARR_POS = 0
-def get_flight_radar():
+def get_flight_radar(f_pos):
     data = get_radar_data()
-    flight = data[FLIGHT_ARR_POS]
+    flight = data[f_pos]
     return flight
 
-def get_flight_real():
+def get_flight_real(f_pos):
     data = get_ground_truth_data()
-    flight = data[FLIGHT_ARR_POS]
+    flight = data[f_pos]
     return flight
 
 #Plots via position
@@ -73,6 +72,9 @@ def plot_flight(flight_radar, flight_real):
     plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"])
     plt.show()
 
+
+DELTA_T = 10        #Time in seconds between observations
+STD_DEV = 50        #Standard deviation in meters for independent x(long) and y(lat)
 ##TODO:Implement
 def get_filtered_positions(flight_radar, flight_real):
     observations = set_lat_lon_from_x_y(flight_radar)
@@ -112,8 +114,9 @@ def get_filtered_positions(flight_radar, flight_real):
     return
 
 if __name__ == "__main__":
-    tracked_flight = get_flight_radar()         ##gets a singular flight to track from radar
-    real_flight = get_flight_real()             ##gets a singular flight to track from real data
+    flight_arr_pos = 0                                          ##For selecting which flight in the data set to consider
+    tracked_flight = get_flight_radar(flight_arr_pos)           ##gets a singular flight to track from radar
+    real_flight = get_flight_real(flight_arr_pos)               ##gets a singular flight to track from real data
 
-    get_filtered_positions(tracked_flight, real_flight)      ##performs the kalman filter to update predictions
-    plot_flight(tracked_flight, real_flight)    ##plots the filtered data against the real
+    get_filtered_positions(tracked_flight, real_flight)         ##performs the kalman filter to update predictions
+    plot_flight(tracked_flight, real_flight)                    ##plots the filtered data against the real
