@@ -2,9 +2,10 @@
 from traffic.data import samples
 from geopy.distance import geodesic
 from numpy.random import default_rng
+import numpy as np
 import pyproj
 
-import pykalman as KalmanFilter
+from pykalman import KalmanFilter
 import matplotlib.pyplot as plt
 
 # returns a list of flights with the original GPS data
@@ -75,9 +76,37 @@ def plot_flight(flight_radar, flight_real):
 ##TODO:Implement
 def get_filtered_positions(flight):
     observations = set_lat_lon_from_x_y(flight)
-    transition_matricies = None
-    observation_matricies = None
-    ##kf = KalmanFilter(transition_matricies, observation_matricies)
+
+    ##Get covariance with function_base.cov()
+    obesrvation_data = np.stack(flight.data["latitude"], flight.data["longitude"], 1)
+
+    transition_matrices = None
+    observation_matrices = None
+    transition_covariance = None
+    observation_covariance = np.cov(obesrvation_data)
+    transition_offsets = None
+    observation_offsets = None
+    initial_state_mean = None
+    initial_state_covariance = None
+
+    #Needed for smoothing
+    n_dim_state = None                  #Size of the state space
+    n_dim_obs = None                    #Size of the observation space
+
+
+    kf = KalmanFilter(transition_matrices,
+             observation_matrices,
+             transition_covariance,
+             observation_covariance,
+             transition_offsets,
+             observation_offsets,
+             initial_state_mean,
+             initial_state_covariance,
+             random_state: Any = None,
+             em_vars: List[str] = ['transition_covariance', 'observation_covariance',
+                     'initial_state_mean', 'initial_state_covariance'],
+             n_dim_state,
+             n_dim_obs)
     return
 
 if __name__ == "__main__":
