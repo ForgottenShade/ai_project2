@@ -74,11 +74,11 @@ def plot_flight(flight_radar, flight_real):
     plt.show()
 
 ##TODO:Implement
-def get_filtered_positions(flight):
-    observations = set_lat_lon_from_x_y(flight)
+def get_filtered_positions(flight_radar, flight_real):
+    observations = set_lat_lon_from_x_y(flight_radar)
 
     ##Get covariance with function_base.cov()
-    obesrvation_data = np.stack(flight.data["latitude"], flight.data["longitude"], 1)
+    obesrvation_data = np.stack(flight_radar.data["latitude"], flight_radar.data["longitude"], 1)
 
     transition_matrices = None
     observation_matrices = None
