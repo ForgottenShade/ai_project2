@@ -4,8 +4,8 @@ from geopy.distance import geodesic
 from numpy.random import default_rng
 import pyproj
 
-if __name__ == "__main__":
-    print("fuck this project :)")
+import matplotlib.pyplot as plt
+from Flights import Flight
 
 # returns a list of flights with the original GPS data
 def get_ground_truth_data():
@@ -54,3 +54,20 @@ def set_lat_lon_from_x_y(flight):
     flight.data["latitute"] = lats
     return flight
 
+
+##gets the first flights data and converts it to our flight class make it more manageable
+def get_flight():
+    data = get_ground_truth_data()
+    _flight = data[0]
+    new_flight = Flight(_flight.aircraft, _flight.data["latitude"], _flight.data["longitude"])
+    return new_flight
+
+
+def plot_flight(flight):
+    plt.plot(flight.latitude, flight.longitude)
+    plt.show()
+
+
+if __name__ == "__main__":
+    tracked_flight = get_flight()     ##gets a singular flight to track
+    plot_flight(tracked_flight)
