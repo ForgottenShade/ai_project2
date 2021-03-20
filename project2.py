@@ -6,7 +6,6 @@ import pyproj
 
 import pykalman as KalmanFilter
 import matplotlib.pyplot as plt
-from Flights import Flight
 
 # returns a list of flights with the original GPS data
 def get_ground_truth_data():
@@ -56,27 +55,34 @@ def set_lat_lon_from_x_y(flight):
     return flight
 
 
-##gets the first flights data and converts it to our flight class make it more manageable
-def get_flight():
+FLIGHT_ARR_POS = 0
+def get_flight_radar():
+    data = get_radar_data()
+    flight = data[FLIGHT_ARR_POS]
+    return flight
+
+def get_flight_real():
     data = get_ground_truth_data()
-    _flight = data[0]
-    new_flight = Flight(_flight.aircraft, _flight.data["latitude"], _flight.data["longitude"])
-    return new_flight
+    flight = data[FLIGHT_ARR_POS]
+    return flight
 
 
-def plot_flight(flight):
-    plt.plot(flight.latitude, flight.longitude)
+def plot_flight(flight_radar, flight_real):
+    plt.plot(flight_real.data["latitude"], flight_real.data["longitude"])
+    plt.plot(flight_radar.data["latitude"], flight_radar.data["longitude"])
     plt.show()
 
 ##TODO:Implement
 def get_filtered_positions(flight):
+    observations = set_lat_lon_from_x_y(flight)
     transition_matricies = None
     observation_matricies = None
-    kf = KalmanFilter(transition_matricies, observation_matricies)
+    ##kf = KalmanFilter(transition_matricies, observation_matricies)
     return
 
 if __name__ == "__main__":
-    tracked_flight = get_flight()     ##gets a singular flight to track
-    plot_flight(tracked_flight)
-    get_filtered_positions(tracked_flight)
-    plot_flight(tracked_flight)
+    tracked_flight = get_flight_radar()         ##gets a singular flight to track from radar
+    real_flight = get_flight_real()             ##gets a singular flight to track from real data
+
+    get_filtered_positions(tracked_flight)      ##performs the kalman filter to update predictions
+    plot_flight(tracked_flight, real_flight)    ##plots the filtered data against the real
