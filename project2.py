@@ -67,10 +67,10 @@ def get_flight_real():
     flight = data[FLIGHT_ARR_POS]
     return flight
 
-
+#Plots via position
 def plot_flight(flight_radar, flight_real):
-    plt.plot(flight_real.data["latitude"], flight_real.data["longitude"])
-    plt.plot(flight_radar.data["latitude"], flight_radar.data["longitude"])
+    plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"])
+    plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"])
     plt.show()
 
 ##TODO:Implement
@@ -78,7 +78,7 @@ def get_filtered_positions(flight_radar, flight_real):
     observations = set_lat_lon_from_x_y(flight_radar)
 
     ##Get covariance with function_base.cov()
-    obesrvation_data = np.stack(flight_radar.data["latitude"], flight_radar.data["longitude"], 1)
+    obesrvation_data = np.stack((flight_radar.data["longitude"], flight_radar.data["latitude"]), axis=0)
 
     transition_matrices = None
     observation_matrices = None
@@ -93,6 +93,7 @@ def get_filtered_positions(flight_radar, flight_real):
     n_dim_state = None                  #Size of the state space
     n_dim_obs = None                    #Size of the observation space
 
+    return
 
     kf = KalmanFilter(transition_matrices,
              observation_matrices,
@@ -101,17 +102,18 @@ def get_filtered_positions(flight_radar, flight_real):
              transition_offsets,
              observation_offsets,
              initial_state_mean,
-             initial_state_covariance,
-             random_state: Any = None,
-             em_vars: List[str] = ['transition_covariance', 'observation_covariance',
-                     'initial_state_mean', 'initial_state_covariance'],
-             n_dim_state,
-             n_dim_obs)
+             initial_state_covariance)
+             #random_state: Any = None,
+             #em_vars: List[str] = ['transition_covariance', 'observation_covariance',
+             #        'initial_state_mean', 'initial_state_covariance'],
+             #n_dim_state,
+             #n_dim_obs)
+
     return
 
 if __name__ == "__main__":
     tracked_flight = get_flight_radar()         ##gets a singular flight to track from radar
     real_flight = get_flight_real()             ##gets a singular flight to track from real data
 
-    get_filtered_positions(tracked_flight)      ##performs the kalman filter to update predictions
+    get_filtered_positions(tracked_flight, real_flight)      ##performs the kalman filter to update predictions
     plot_flight(tracked_flight, real_flight)    ##plots the filtered data against the real
