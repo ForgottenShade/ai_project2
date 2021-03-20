@@ -67,7 +67,11 @@ def plot_flight(flight):
     plt.plot(flight.latitude, flight.longitude)
     plt.show()
 
+def get_filtered_positions(flight):
+    return
 
 if __name__ == "__main__":
     tracked_flight = get_flight()     ##gets a singular flight to track
+    plot_flight(tracked_flight)
+    get_filtered_positions(tracked_flight)
     plot_flight(tracked_flight)
