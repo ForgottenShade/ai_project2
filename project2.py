@@ -4,6 +4,7 @@ from geopy.distance import geodesic
 from numpy.random import default_rng
 import pyproj
 
+import pykalman as KalmanFilter
 import matplotlib.pyplot as plt
 from Flights import Flight
 
@@ -67,7 +68,11 @@ def plot_flight(flight):
     plt.plot(flight.latitude, flight.longitude)
     plt.show()
 
+##TODO:Implement
 def get_filtered_positions(flight):
+    transition_matricies = None
+    observation_matricies = None
+    kf = KalmanFilter(transition_matricies, observation_matricies)
     return
 
 if __name__ == "__main__":
