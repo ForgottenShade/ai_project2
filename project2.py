@@ -77,10 +77,10 @@ DELTA_T = 10        #Time in seconds between observations
 STD_DEV = 50        #Standard deviation in meters for independent x(long) and y(lat)
 ##TODO:Implement
 
-# State matrix setup: |  x |
-#                     |  y |
-#                     | vx |
-#                     | vy |
+# State matrix setup: |   x   |
+#                     |   y   |
+#                     | x_hat |
+#                     | y_hat |
 def get_filtered_positions(flight_radar, flight_real):
 
     observations = set_lat_lon_from_x_y(flight_radar)
