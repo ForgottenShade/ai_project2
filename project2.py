@@ -76,35 +76,46 @@ def plot_flight(flight_radar, flight_real):
 DELTA_T = 10        #Time in seconds between observations
 STD_DEV = 50        #Standard deviation in meters for independent x(long) and y(lat)
 ##TODO:Implement
+
+# State matrix setup: |  x |
+#                     |  y |
+#                     | vx |
+#                     | vy |
 def get_filtered_positions(flight_radar, flight_real):
+
     observations = set_lat_lon_from_x_y(flight_radar)
 
     ##Get covariance with function_base.cov()
-    obesrvation_data = np.stack((flight_radar.data["longitude"], flight_radar.data["latitude"]), axis=0)
+    observation_data = np.stack((flight_radar.data["longitude"], flight_radar.data["latitude"]), axis=0)
 
-    transition_matrices = None
-    observation_matrices = None
-    transition_covariance = None
-    observation_covariance = np.cov(obesrvation_data)
-    transition_offsets = None
-    observation_offsets = None
-    initial_state_mean = None
-    initial_state_covariance = None
-
+    transition_matrix = np.array([[1, 0, DELTA_T,       0],
+                                  [0, 1,       0, DELTA_T],
+                                  [0, 0,       1,       0],
+                                  [0, 0,       0,       1]])
+    observation_matrix = np.array([[1,0,0,0],   # Identity matrix   C
+                                   [0,1,0,0],
+                                   [0,0,1,0],
+                                   [0,0,0,1]])
+    transition_covariance = None        #Q
+    observation_covariance = np.cov(observation_data) # = np.diag([STD_DEV, STD_DEV]) ** 2  R
+    transition_offsets = None           #Bu
+    observation_offsets = None          #z
+    initial_state_mean = np.stack((observation_data[0][0], observation_data[1][0], 0, 0), axis=0)
+    initial_state_covariance = observation_covariance
     #Needed for smoothing
     n_dim_state = None                  #Size of the state space
     n_dim_obs = None                    #Size of the observation space
 
     return
 
-    kf = KalmanFilter(transition_matrices,
-             observation_matrices,
-             transition_covariance,
-             observation_covariance,
-             transition_offsets,
-             observation_offsets,
-             initial_state_mean,
-             initial_state_covariance)
+    kf = KalmanFilter(transition_matrices = transition_matrix,
+             observation_matrices = observation_matrix,
+             transition_covarianc = transition_covariance,
+             observation_covariance = observation_covariance,
+             transition_offsets = transition_offsets,
+             observation_offsets = observation_offsets,
+             initial_state_mean = initial_state_mean,
+             initial_state_covariance = initial_state_covariance)
              #random_state: Any = None,
              #em_vars: List[str] = ['transition_covariance', 'observation_covariance',
              #        'initial_state_mean', 'initial_state_covariance'],
@@ -119,4 +130,4 @@ if __name__ == "__main__":
     real_flight = get_flight_real(flight_arr_pos)               ##gets a singular flight to track from real data
 
     get_filtered_positions(tracked_flight, real_flight)         ##performs the kalman filter to update predictions
-    plot_flight(tracked_flight, real_flight)                    ##plots the filtered data against the real
+    #plot_flight(tracked_flight, real_flight)                    ##plots the filtered data against the real
