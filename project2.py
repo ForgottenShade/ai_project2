@@ -119,7 +119,10 @@ def get_filtered_positions(flight_radar, flight_real):
     transition_covariance = None  # Q is explained at end of lecture, mar. 19th.... recording isn't up yet Q.Q
     # https://youtu.be/Nfrk2UdEOcQ?t=73
     observation_covariance = np.cov(observation_data)  # = np.diag([STD_DEV, STD_DEV, ]) ** 2  R
-    transition_offsets = None  # Bu
+    transition_offsets = np.array([[0.5*DELTA_T**2, 0],
+                                   [0, 0.5*DELTA_T**2],
+                                   [DELTA_T, 0],
+                                   [0, DELTA_T]])  # Bu
     observation_offsets = None  # z
     initial_state_mean = np.stack((observation_data[0][0], observation_data[1][0], 0, 0), axis=0)
     initial_state_covariance = observation_covariance
