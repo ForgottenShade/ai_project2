@@ -98,6 +98,17 @@ def get_state_k(flight, k):
         current_y_vel = (flight.data["latitude"][k] - flight.data["latitude"][k - 1]) / DELTA_T
         return np.array([[current_x],[current_y],[current_x_vel],[current_y_vel]])
 
+def get_measurements_k(flight, k):
+    current_x = flight.data["longitude"][k]
+    current_y = flight.data["latitude"][k]
+
+    if(k == 0):
+        return np.array([current_x, current_y, 0, 0])
+    else:
+        current_x_vel = (flight.data["longitude"][k] - flight.data["longitude"][k-1]) / DELTA_T
+        current_y_vel = (flight.data["latitude"][k] - flight.data["latitude"][k - 1]) / DELTA_T
+        return np.array([current_x, current_y, current_x_vel, current_y_vel])
+
 
 # Plots via position
 def plot_flight(flight_radar, flight_real):
@@ -117,12 +128,15 @@ def get_filtered_positions(flight_radar, flight_real):
 
     real_states = []
     radar_states = []
+    measurements = []
 
-    for i in range(flight_real.data.length):
+    for i in range(flight_real.data['longitude'].size):
         current_state = get_state_k(flight_real, i)
         current_obs = get_state_k(flight_radar, i)
+        current_measure = get_measurements_k(flight_radar, i)
         real_states.append(current_state)
         radar_states.append(current_obs)
+        measurements.append(current_measure)
 
     transition_matrix = np.array([[1, 0, DELTA_T, 0],
                                   [0, 1, 0, DELTA_T],
@@ -132,17 +146,17 @@ def get_filtered_positions(flight_radar, flight_real):
     # Compute standard deviation for velocities of real data
     r_x_vel_sum = 0
     r_y_vel_sum = 0
-    for i in range(real_states):
-        r_x_vel_sum += real_states[i][0][2]
-        r_y_vel_sum += real_states[i][0][3]
+    for i in range(len(real_states)):
+        r_x_vel_sum += real_states[i][2][0]
+        r_y_vel_sum += real_states[i][3][0]
     r_avg_x_vel = r_x_vel_sum / len(real_states)
     r_avg_y_vel = r_y_vel_sum / len(real_states)
 
     r_std_x_sum = 0
     r_std_y_sum = 0
-    for i in range(real_states):
-        r_std_x_sum += real_states[i][0][2] - r_avg_x_vel
-        r_std_y_sum += real_states[i][0][3] - r_avg_y_vel
+    for i in range(len(real_states)):
+        r_std_x_sum += real_states[i][2][0] - r_avg_x_vel
+        r_std_y_sum += real_states[i][3][0] - r_avg_y_vel
     r_std_x = np.sqrt(r_std_x_sum / len(real_states))
     r_std_y = np.sqrt(r_std_y_sum / len(real_states))
 
@@ -154,17 +168,17 @@ def get_filtered_positions(flight_radar, flight_real):
     # Compute standard deviation for velocities of radar data
     o_x_vel_sum = 0
     o_y_vel_sum = 0
-    for i in range(radar_states):
-        o_x_vel_sum += radar_states[i][0][2]
-        o_y_vel_sum += radar_states[i][0][3]
+    for i in range(len(radar_states)):
+        o_x_vel_sum += radar_states[i][2][0]
+        o_y_vel_sum += radar_states[i][3][0]
     o_avg_x_vel = o_x_vel_sum / len(radar_states)
     o_avg_y_vel = o_y_vel_sum / len(radar_states)
 
     o_std_x_sum = 0
     o_std_y_sum = 0
-    for i in range(radar_states):
-        o_std_x_sum += radar_states[i][0][2] - o_avg_x_vel
-        o_std_y_sum += radar_states[i][0][3] - o_avg_y_vel
+    for i in range(len(radar_states)):
+        o_std_x_sum += radar_states[i][2][0] - o_avg_x_vel
+        o_std_y_sum += radar_states[i][3][0] - o_avg_y_vel
     o_std_x = np.sqrt(o_std_x_sum / len(radar_states))
     o_std_y = np.sqrt(o_std_y_sum / len(radar_states))
 
@@ -203,6 +217,7 @@ def get_filtered_positions(flight_radar, flight_real):
                       initial_state_mean=initial_state_mean,
                       initial_state_covariance=initial_state_covariance)
 
+    kf.em(measurements)
     # kf = KalmanFilter(transition_matrices=transition_matrix,
     #                   observation_matrices=observation_matrix,
     #                   transition_covariance=transition_covariance,
