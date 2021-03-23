@@ -68,7 +68,7 @@ def set_lat_lon_from_x_y(flight):
 
     lons, lats = projection(flight.data["x"], flight.data["y"], inverse=True)
     flight.data["longitude"] = lons
-    flight.data["latitute"] = lats
+    flight.data["latitude"] = lats
     return flight
 
 DELTA_T = 10  # Time in seconds between observations
@@ -112,8 +112,15 @@ def get_measurements_k(flight, k):
 
 # Plots via position
 def plot_flight(flight_radar, flight_real):
+    #plt.plot(flight_radar[0], flight_radar[1])
     plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"])
-    plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"])
+    plt.plot(flight_real.data["longitude"], flight_real.data["latitude"])
+    plt.show()
+
+def plot_shit(shit1, shit2, flight_real, flight_radar):
+    plt.plot(shit1, shit2, 'r')
+    plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"], 'g')
+    plt.plot(flight_real.data["longitude"], flight_real.data["latitude"], 'b')
     plt.show()
 
 
@@ -143,49 +150,56 @@ def get_filtered_positions(flight_radar, flight_real):
                                   [0, 0, 1, 0],
                                   [0, 0, 0, 1]])
 
-    # Compute standard deviation for velocities of real data
-    r_x_vel_sum = 0
-    r_y_vel_sum = 0
-    for i in range(len(real_states)):
-        r_x_vel_sum += real_states[i][2][0]
-        r_y_vel_sum += real_states[i][3][0]
-    r_avg_x_vel = r_x_vel_sum / len(real_states)
-    r_avg_y_vel = r_y_vel_sum / len(real_states)
+    # # Compute standard deviation for velocities of real data
+    # r_x_vel_sum = 0
+    # r_y_vel_sum = 0
+    # for i in range(len(real_states)):
+    #     r_x_vel_sum += real_states[i][2][0]
+    #     r_y_vel_sum += real_states[i][3][0]
+    # r_avg_x_vel = r_x_vel_sum / len(real_states)
+    # r_avg_y_vel = r_y_vel_sum / len(real_states)
+    #
+    # r_std_x_sum = 0
+    # r_std_y_sum = 0
+    # for i in range(len(real_states)):
+    #     r_std_x_sum += real_states[i][2][0] - r_avg_x_vel
+    #     r_std_y_sum += real_states[i][3][0] - r_avg_y_vel
+    # r_std_x = np.sqrt(r_std_x_sum / len(real_states))
+    # r_std_y = np.sqrt(r_std_y_sum / len(real_states))
+    #
+    # transition_covariance = np.array([[STD_DEV**2, STD_DEV**2, STD_DEV * r_std_x, STD_DEV * r_std_y],
+    #                                   [STD_DEV**2, STD_DEV**2, STD_DEV * r_std_x, STD_DEV * r_std_y],
+    #                                   [STD_DEV * r_std_x, STD_DEV * r_std_x, r_std_x**2, r_std_x * r_std_y],
+    #                                   [STD_DEV * r_std_y, STD_DEV * r_std_y, r_std_x * r_std_y, r_std_y**2]])
+    #
+    # # Compute standard deviation for velocities of radar data
+    # o_x_vel_sum = 0
+    # o_y_vel_sum = 0
+    # for i in range(len(radar_states)):
+    #     o_x_vel_sum += radar_states[i][2][0]
+    #     o_y_vel_sum += radar_states[i][3][0]
+    # o_avg_x_vel = o_x_vel_sum / len(radar_states)
+    # o_avg_y_vel = o_y_vel_sum / len(radar_states)
+    #
+    # o_std_x_sum = 0
+    # o_std_y_sum = 0
+    # for i in range(len(radar_states)):
+    #     o_std_x_sum += radar_states[i][2][0] - o_avg_x_vel
+    #     o_std_y_sum += radar_states[i][3][0] - o_avg_y_vel
+    # o_std_x = np.sqrt(o_std_x_sum / len(radar_states))
+    # o_std_y = np.sqrt(o_std_y_sum / len(radar_states))
+    #
+    # observation_covariance = np.array([[STD_DEV ** 2, STD_DEV ** 2, STD_DEV * o_std_x, STD_DEV * o_std_y],
+    #                                    [STD_DEV ** 2, STD_DEV ** 2, STD_DEV * o_std_x, STD_DEV * o_std_y],
+    #                                    [STD_DEV * o_std_x, STD_DEV * o_std_x, o_std_x ** 2, o_std_x * o_std_y],
+    #                                    [STD_DEV * o_std_y, STD_DEV * o_std_y, o_std_x * o_std_y, o_std_y ** 2]])
 
-    r_std_x_sum = 0
-    r_std_y_sum = 0
-    for i in range(len(real_states)):
-        r_std_x_sum += real_states[i][2][0] - r_avg_x_vel
-        r_std_y_sum += real_states[i][3][0] - r_avg_y_vel
-    r_std_x = np.sqrt(r_std_x_sum / len(real_states))
-    r_std_y = np.sqrt(r_std_y_sum / len(real_states))
+    observation_covariance = np.array([[STD_DEV ** 2, 0, 0, 0],
+                                       [0, STD_DEV ** 2, 0, 0],
+                                       [0, 0, 0, 0],
+                                       [0, 0, 0, 0]])
 
-    transition_covariance = np.array([[STD_DEV**2, STD_DEV**2, STD_DEV * r_std_x, STD_DEV * r_std_y],
-                                      [STD_DEV**2, STD_DEV**2, STD_DEV * r_std_x, STD_DEV * r_std_y],
-                                      [STD_DEV * r_std_x, STD_DEV * r_std_x, r_std_x**2, r_std_x * r_std_y],
-                                      [STD_DEV * r_std_y, STD_DEV * r_std_y, r_std_x * r_std_y, r_std_y**2]])
-
-    # Compute standard deviation for velocities of radar data
-    o_x_vel_sum = 0
-    o_y_vel_sum = 0
-    for i in range(len(radar_states)):
-        o_x_vel_sum += radar_states[i][2][0]
-        o_y_vel_sum += radar_states[i][3][0]
-    o_avg_x_vel = o_x_vel_sum / len(radar_states)
-    o_avg_y_vel = o_y_vel_sum / len(radar_states)
-
-    o_std_x_sum = 0
-    o_std_y_sum = 0
-    for i in range(len(radar_states)):
-        o_std_x_sum += radar_states[i][2][0] - o_avg_x_vel
-        o_std_y_sum += radar_states[i][3][0] - o_avg_y_vel
-    o_std_x = np.sqrt(o_std_x_sum / len(radar_states))
-    o_std_y = np.sqrt(o_std_y_sum / len(radar_states))
-
-    observation_covariance = np.array([[STD_DEV ** 2, STD_DEV ** 2, STD_DEV * o_std_x, STD_DEV * o_std_y],
-                                      [STD_DEV ** 2, STD_DEV ** 2, STD_DEV * o_std_x, STD_DEV * o_std_y],
-                                      [STD_DEV * o_std_x, STD_DEV * o_std_x, o_std_x ** 2, o_std_x * o_std_y],
-                                      [STD_DEV * o_std_y, STD_DEV * o_std_y, o_std_x * o_std_y, o_std_y ** 2]])
+    transition_covariance = np.diag([50, 50, 0, 0]) ** 2
 
     ##Get covariance with function_base.cov()
     observation_data = np.stack((flight_radar.data["longitude"], flight_radar.data["latitude"]), axis=0)
@@ -194,10 +208,12 @@ def get_filtered_positions(flight_radar, flight_real):
                                    [0, 0, 1, 0],
                                    [0, 0, 0, 1]])
     # https://youtu.be/Nfrk2UdEOcQ?t=73
-    transition_offsets = np.array([[0.5*DELTA_T**2, 0],
-                                   [0, 0.5*DELTA_T**2],
-                                   [DELTA_T, 0],
-                                   [0, DELTA_T]])  # Bu
+    transition_offsets = np.dot(np.array([[0.5*DELTA_T**2, 0],
+                                     [0, 0.5*DELTA_T**2],
+                                     [DELTA_T, 0],          # purely guesswork here
+                                     [0, DELTA_T]]), np.array([[0.15], [0.15]]))  # Bu. Needs to be multiplied with a [2x1] matrix before usable?
+    # Turns out NOPE... No clue what shape this needs to be...
+
     observation_offsets = None  # z
 
 
@@ -211,16 +227,21 @@ def get_filtered_positions(flight_radar, flight_real):
 
 
     kf = KalmanFilter(transition_matrices=transition_matrix,
-                      transition_covariance=transition_covariance,
                       observation_matrices=observation_matrix,
                       observation_covariance=observation_covariance,
                       initial_state_mean=initial_state_mean,
-                      initial_state_covariance=initial_state_covariance)
+                      initial_state_covariance=initial_state_covariance,
+                      transition_covariance=transition_covariance,
+                      n_dim_obs=4)
 
-    kf.em(measurements)
+    pred_state, state_cov = kf.smooth(measurements)
+    xs = pred_state[:, 0]
+    ys = pred_state[:, 1]
+    return xs, ys
+    #kf.em(measurements)
     # kf = KalmanFilter(transition_matrices=transition_matrix,
     #                   observation_matrices=observation_matrix,
-    #                   transition_covariance=transition_covariance,
+    #                   transition_covariance=transition_covariance, #transition_covariance says what you think about the error in your prediction.
     #                   observation_covariance=observation_covariance,
     #                   transition_offsets=transition_offsets,
     #                   observation_offsets=observation_offsets,
@@ -240,5 +261,8 @@ if __name__ == "__main__":
     tracked_flight = get_flight_radar(flight_arr_pos)  ##gets a singular flight to track from radar
     real_flight = get_flight_real(flight_arr_pos)  ##gets a singular flight to track from real data
 
-    get_filtered_positions(tracked_flight, real_flight)  ##performs the kalman filter to update predictions
-    # plot_flight(tracked_flight, real_flight)                    ##plots the filtered data against the real
+    stuff, stuff2 = get_filtered_positions(tracked_flight, real_flight) ##performs the kalman filter to update predictions
+    #print(stuff)
+    #print(stuff2)
+    plot_shit(stuff, stuff2, real_flight,tracked_flight)
+    #plot_flight(tracked_flight, real_flight)                    ##plots the filtered data against the real
