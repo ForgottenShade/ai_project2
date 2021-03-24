@@ -73,6 +73,8 @@ def set_lat_lon_from_x_y(flight):
 
 
 DELTA_T = 10  # Time in seconds between observations
+DELTA_T_COV = (0.25 * DELTA_T) ** 4
+DELTA_T_COV_Mix = (0.5 * DELTA_T) ** 3
 STD_DEV = 50  # Standard deviation in meters for independent x(long) and y(lat)
 ACCEL = 3  # Acceleration will not exceed 3m/sec**2
 LAT_M = 111131.745 # constants to convert degree of lat to m
@@ -174,10 +176,10 @@ def get_filtered_positions(flight_radar, flight_real):
     r_std_x = np.sqrt(r_std_x_sum / len(real_states))
     r_std_y = np.sqrt(r_std_y_sum / len(real_states))
 
-    transition_covariance = np.array([[STD_DEV**2, STD_DEV**2, STD_DEV * r_std_x, 0],
-                                      [STD_DEV**2, STD_DEV**2, STD_DEV * r_std_x, STD_DEV * r_std_y],
-                                      [STD_DEV * r_std_x, STD_DEV * r_std_x, r_std_x**2, r_std_x * r_std_y],
-                                      [0, STD_DEV * r_std_y, r_std_x * r_std_y, r_std_y**2]])
+    transition_covariance = np.array([[DELTA_T_COV * STD_DEV**2, DELTA_T_COV * STD_DEV**2, DELTA_T_COV_Mix * STD_DEV * r_std_x, 0],
+                                      [DELTA_T_COV * STD_DEV**2, DELTA_T_COV * STD_DEV**2, 0, DELTA_T_COV_Mix * STD_DEV * r_std_y],
+                                      [DELTA_T_COV_Mix * STD_DEV * r_std_x, 0, DELTA_T ** 2 * r_std_x**2, DELTA_T ** 2 * r_std_x * r_std_y],
+                                      [0, DELTA_T_COV_Mix * STD_DEV * r_std_y, DELTA_T ** 2 * r_std_x * r_std_y, DELTA_T ** 2 * r_std_y**2]])
 
     # Compute standard deviation for velocities of radar data
     o_x_vel_sum = 0
@@ -196,10 +198,10 @@ def get_filtered_positions(flight_radar, flight_real):
     o_std_x = np.sqrt(o_std_x_sum / len(radar_states))
     o_std_y = np.sqrt(o_std_y_sum / len(radar_states))
 
-    observation_covariance = np.array([[STD_DEV ** 2, STD_DEV ** 2, STD_DEV * o_std_x, 0],
-                                       [STD_DEV ** 2, STD_DEV ** 2, STD_DEV * o_std_x, STD_DEV * o_std_y],
-                                       [STD_DEV * o_std_x, STD_DEV * o_std_x, o_std_x ** 2, o_std_x * o_std_y],
-                                       [0, STD_DEV * o_std_y, o_std_x * o_std_y, o_std_y ** 2]])
+    observation_covariance = np.array([[DELTA_T_COV * STD_DEV**2, DELTA_T_COV * STD_DEV**2, DELTA_T_COV_Mix * STD_DEV * o_std_x, 0],
+                                      [DELTA_T_COV * STD_DEV**2, DELTA_T_COV * STD_DEV**2, 0, DELTA_T_COV_Mix * STD_DEV * o_std_y],
+                                      [DELTA_T_COV_Mix * STD_DEV * o_std_x, 0, DELTA_T ** 2 * o_std_x**2, DELTA_T ** 2 * o_std_x * o_std_y],
+                                      [0, DELTA_T_COV_Mix * STD_DEV * o_std_y, DELTA_T ** 2 * o_std_x * o_std_y, DELTA_T ** 2 * o_std_y**2]])
     #
     # observation_covariance = np.array([[STD_DEV ** 2, 0, 0, 0],
     #                                    [0, STD_DEV ** 2, 0, 0],
