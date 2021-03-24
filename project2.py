@@ -126,16 +126,18 @@ def get_measurements_k(flight, k):
 # Plots via position
 def plot_flight(flight_radar, flight_real):
     # plt.plot(flight_radar[0], flight_radar[1])
-    plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"], 'c')
-    plt.plot(flight_real.data["longitude"], flight_real.data["latitude"], 'k')
+    plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"], 'c', label="RadarData")
+    plt.plot(flight_real.data["longitude"], flight_real.data["latitude"], 'k', label="RealData")
+    plt.legend(loc="upper left")
     plt.show()
 
 
 def plot_all(smoothed_x, smoothed_y, filtered_x, filtered_y, flight_real, flight_radar):
-    plt.plot(smoothed_x, smoothed_y, 'r')
-    plt.plot(filtered_x, filtered_y, 'b')
-    plt.plot(flight_radar.data["longitude"] * LON_M, flight_radar.data["latitude"] * LAT_M, 'c')
-    plt.plot(flight_real.data["longitude"] * LON_M, flight_real.data["latitude"] * LAT_M, 'k')
+    plt.plot(smoothed_x, smoothed_y, 'r', label="Smoothed")
+    plt.plot(filtered_x, filtered_y, 'b', label="Filtered")
+    plt.plot(flight_radar.data["longitude"] * LON_M, flight_radar.data["latitude"] * LAT_M, 'c', label="RadarData")
+    plt.plot(flight_real.data["longitude"] * LON_M, flight_real.data["latitude"] * LAT_M, 'k', label="RealData")
+    plt.legend(loc="upper left")
     plt.show()
 
 
@@ -233,10 +235,6 @@ def get_filtered_positions(flight_radar, flight_real):
                                   axis=0)
     initial_state_covariance = observation_covariance
 
-    # Needed for smoothing
-    n_dim_state = len(real_states)  # Size of the state space
-    n_dim_obs = len(radar_states)  # Size of the observation space
-
     kf = KalmanFilter(transition_matrices=transition_matrix,
                       observation_matrices=observation_matrix,
                       observation_covariance=observation_covariance,
@@ -247,23 +245,35 @@ def get_filtered_positions(flight_radar, flight_real):
                       n_dim_state=4)
 
     filtered = kf.filter(measurements)
+    # Extracting the positions from the filtered data.
     filtered_xs = filtered[0][:, 0]
     filtered_ys = filtered[0][:, 1]
     smoothed = kf.smooth(measurements)
+    # Extracting the positions from the smoothed data.
     smoothed_xs = smoothed[0][:, 0]
     smoothed_ys = smoothed[0][:, 1]
-    kf = kf.em(measurements, n_iter=5)
-    five_filtered = kf.filter(measurements)
-    five_fxs = five_filtered[0][:, 0]
-    five_fys = five_filtered[0][:, 1]
-    five_smoothed = kf.smooth(measurements)
-    five_sxs = five_smoothed[0][:, 0]
-    five_sys = five_smoothed[0][:, 1]
+
+    # TODO: Measure the error of the filtered positions. Compute the mean and max distance to the real data at delta_t
+    # Currently measuring the distance between the real state points regardless of timestamp
+    # So it obviously doesn't work.
+    # f_max_dist = 0
+    # s_max_dist = 0
+    # for i in range(len(filtered_xs)):
+    #     f_dist = np.sqrt((real_states[i][0][0] - filtered_xs[i]) ** 2 + (real_states[i][1][0] - filtered_ys[i]) ** 2)
+    #     s_dist = np.sqrt((real_states[i][0][0] - smoothed_xs[i]) ** 2 + (real_states[i][1][0] - smoothed_ys[i]) ** 2)
+    #     if f_dist > f_max_dist:
+    #         f_max_dist = f_dist
+    #     if s_dist > s_max_dist:
+    #         s_max_dist = s_dist
+    #
+    # print(f_max_dist, s_max_dist)
+
+
     return smoothed_xs, smoothed_ys, filtered_xs, filtered_ys
     # kf.em(measurements)
     # kf = KalmanFilter(transition_matrices=transition_matrix,
     #                   observation_matrices=observation_matrix,
-    #                   transition_covariance=transition_covariance, #transition_covariance says what you think about the error in your prediction.
+    #                   transition_covariance=transition_covariance,
     #                   observation_covariance=observation_covariance,
     #                   transition_offsets=transition_offsets,
     #                   observation_offsets=observation_offsets,
@@ -285,11 +295,17 @@ if __name__ == "__main__":
             tracked_flight = radar_data[i]  # gets a singular flight to track from radar
 
             real_flight = real_data[i]  # gets a singular flight to track from real data
+
             if i == 0:  # Just to show that the conversion doesn't affect the data
+                # plots the real data and the radar data.
                 plot_flight(tracked_flight, real_flight)
+
 
             smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y = \
                 get_filtered_positions(tracked_flight, real_flight)  # performs the kalman filter to update predictions
+
+            print(real_flight.data)
+            print(tracked_flight.data)
 
             # plots the filtered and smoothed data against the real and radar data
             plot_all(smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, real_flight, tracked_flight)
