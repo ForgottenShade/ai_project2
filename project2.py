@@ -130,11 +130,18 @@ def plot_flight(flight_radar, flight_real):
     plt.plot(flight_real.data["longitude"], flight_real.data["latitude"], 'k')
     plt.show()
 
+def plot_some(smoothed_x, smoothed_y, filtered_x, filtered_y, flight_real, flight_radar):
+    plt.plot(smoothed_x, smoothed_y, 'r')
+    plt.plot(filtered_x, filtered_y, 'b')
+    plt.plot(flight_radar.data["longitude"] * LON_M, flight_radar.data["latitude"] * LAT_M, 'c')
+    plt.plot(flight_real.data["longitude"] * LON_M, flight_real.data["latitude"] * LAT_M, 'k')
+    plt.show()
+
 
 def plot_all(smoothed_x, smoothed_y, filtered_x, filtered_y, iter_x, iter_y, ifx, ify, flight_real, flight_radar):
     plt.plot(smoothed_x, smoothed_y, 'r')
-    plt.plot(filtered_x, filtered_y, 'g')
-    plt.plot(iter_x, iter_y, 'b')
+    plt.plot(filtered_x, filtered_y, 'b')
+    plt.plot(iter_x, iter_y, 'g')
     plt.plot(ifx, ify, 'm')
     plt.plot(flight_radar.data["longitude"] * LON_M, flight_radar.data["latitude"] * LAT_M, 'c')
     plt.plot(flight_real.data["longitude"] * LON_M, flight_real.data["latitude"] * LAT_M, 'k')
@@ -288,14 +295,24 @@ def get_filtered_positions(flight_radar, flight_real):
 
 
 if __name__ == "__main__":
-    flight_arr_pos = 1  ##For selecting which flight in the data set to consider
-    tracked_flight = get_flight_radar(flight_arr_pos)  ##gets a singular flight to track from radar
-    real_flight = get_flight_real(flight_arr_pos)  ##gets a singular flight to track from real data
+    radar_data = get_radar_data()
+    real_data = get_ground_truth_data()
+    repeater = "y"
+    while( repeater == "y"):
+        for i in range(10):
+            #flight_arr_pos = 0  ##For selecting which flight in the data set to consider
+            tracked_flight = radar_data[i]
+            ##gets a singular flight to track from radar
+            real_flight = real_data[i]  ##gets a singular flight to track from real data
 
-    plot_flight(tracked_flight, real_flight)
+            plot_flight(tracked_flight, real_flight)
 
-    smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, iter_five_x, iter_five_y, ifx, ify = \
-        get_filtered_positions(tracked_flight, real_flight)  ##performs the kalman filter to update predictions
+            smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, iter_five_x, iter_five_y, ifx, ify = \
+                get_filtered_positions(tracked_flight, real_flight)  ##performs the kalman filter to update predictions
 
-    plot_all(smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, iter_five_x, iter_five_y, ifx, ify, real_flight, tracked_flight)
+            plot_some(smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, real_flight, tracked_flight)
+            plot_all(smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, iter_five_x, iter_five_y, ifx, ify, real_flight, tracked_flight)
+            i += 1
+
+        repeater = input("Wanna do me again? (y/n): ")
                       ##plots the filtered data against the real
