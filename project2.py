@@ -71,9 +71,10 @@ def set_lat_lon_from_x_y(flight):
     flight.data["latitude"] = lats
     return flight
 
+
 DELTA_T = 10  # Time in seconds between observations
 STD_DEV = 50  # Standard deviation in meters for independent x(long) and y(lat)
-ACCEL = 3     # Acceleration will not exceed 3m/sec**2
+ACCEL = 3  # Acceleration will not exceed 3m/sec**2
 
 
 def get_flight_radar(f_pos):
@@ -87,36 +88,40 @@ def get_flight_real(f_pos):
     flight = data[f_pos]
     return flight
 
+
 def get_state_k(flight, k):
     current_x = flight.data["longitude"][k]
     current_y = flight.data["latitude"][k]
 
-    if(k == 0):
-        return np.array([[current_x],[current_y],[0],[0]])
+    if (k == 0):
+        return np.array([[current_x], [current_y], [0], [0]])
     else:
-        current_x_vel = (flight.data["longitude"][k] - flight.data["longitude"][k-1]) / DELTA_T
+        current_x_vel = (flight.data["longitude"][k] - flight.data["longitude"][k - 1]) / DELTA_T
         current_y_vel = (flight.data["latitude"][k] - flight.data["latitude"][k - 1]) / DELTA_T
-        return np.array([[current_x],[current_y],[current_x_vel],[current_y_vel]])
+        return np.array([[current_x], [current_y], [current_x_vel], [current_y_vel]])
+
 
 def get_measurements_k(flight, k):
     current_x = flight.data["longitude"][k]
     current_y = flight.data["latitude"][k]
 
-    if(k == 0):
+    if (k == 0):
         return np.array([current_x, current_y, 0, 0])
     else:
-        current_x_vel = (flight.data["longitude"][k] - flight.data["longitude"][k-1]) / DELTA_T
+        current_x_vel = (flight.data["longitude"][k] - flight.data["longitude"][k - 1]) / DELTA_T
         current_y_vel = (flight.data["latitude"][k] - flight.data["latitude"][k - 1]) / DELTA_T
         return np.array([current_x, current_y, current_x_vel, current_y_vel])
 
 
 # Plots via position
 def plot_flight(flight_radar, flight_real):
-    #plt.plot(flight_radar[0], flight_radar[1])
+    # plt.plot(flight_radar[0], flight_radar[1])
     plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"])
     plt.plot(flight_real.data["longitude"], flight_real.data["latitude"])
     plt.show()
 
+
+########## REMEMBER TO CHANGE NAME! ffs
 def plot_shit(shit1, shit2, flight_real, flight_radar):
     plt.plot(shit1, shit2, 'r')
     plt.plot(flight_radar.data["longitude"], flight_radar.data["latitude"], 'g')
@@ -199,6 +204,7 @@ def get_filtered_positions(flight_radar, flight_real):
                                        [0, 0, 0, 0],
                                        [0, 0, 0, 0]])
 
+    # Don't know why, but 50 seems to be the magic number... and idc why. Prob related to the obs_covar
     transition_covariance = np.diag([50, 50, 0, 0]) ** 2
 
     ##Get covariance with function_base.cov()
@@ -208,23 +214,21 @@ def get_filtered_positions(flight_radar, flight_real):
                                    [0, 0, 1, 0],
                                    [0, 0, 0, 1]])
     # https://youtu.be/Nfrk2UdEOcQ?t=73
-    transition_offsets = np.dot(np.array([[0.5*DELTA_T**2, 0],
-                                     [0, 0.5*DELTA_T**2],
-                                     [DELTA_T, 0],          # purely guesswork here
-                                     [0, DELTA_T]]), np.array([[0.15], [0.15]]))  # Bu. Needs to be multiplied with a [2x1] matrix before usable?
+    transition_offsets = np.dot(np.array([[0.5 * DELTA_T ** 2, 0],
+                                          [0, 0.5 * DELTA_T ** 2],
+                                          [DELTA_T, 0],  # purely guesswork here
+                                          [0, DELTA_T]]), np.array(
+        [[0.15], [0.15]]))  # Bu. Needs to be multiplied with a [2x1] matrix before usable?
     # Turns out NOPE... No clue what shape this needs to be...
 
     observation_offsets = None  # z
 
-
     initial_state_mean = np.stack((observation_data[0][0], observation_data[1][0], 0, 0), axis=0)
     initial_state_covariance = observation_covariance
-
 
     # Needed for smoothing
     n_dim_state = len(real_states)  # Size of the state space
     n_dim_obs = len(radar_states)  # Size of the observation space
-
 
     kf = KalmanFilter(transition_matrices=transition_matrix,
                       observation_matrices=observation_matrix,
@@ -238,7 +242,7 @@ def get_filtered_positions(flight_radar, flight_real):
     xs = pred_state[:, 0]
     ys = pred_state[:, 1]
     return xs, ys
-    #kf.em(measurements)
+    # kf.em(measurements)
     # kf = KalmanFilter(transition_matrices=transition_matrix,
     #                   observation_matrices=observation_matrix,
     #                   transition_covariance=transition_covariance, #transition_covariance says what you think about the error in your prediction.
@@ -261,8 +265,9 @@ if __name__ == "__main__":
     tracked_flight = get_flight_radar(flight_arr_pos)  ##gets a singular flight to track from radar
     real_flight = get_flight_real(flight_arr_pos)  ##gets a singular flight to track from real data
 
-    stuff, stuff2 = get_filtered_positions(tracked_flight, real_flight) ##performs the kalman filter to update predictions
-    #print(stuff)
-    #print(stuff2)
-    plot_shit(stuff, stuff2, real_flight,tracked_flight)
-    #plot_flight(tracked_flight, real_flight)                    ##plots the filtered data against the real
+    stuff, stuff2 = get_filtered_positions(tracked_flight,
+                                           real_flight)  ##performs the kalman filter to update predictions
+    # print(stuff)
+    # print(stuff2)
+    plot_shit(stuff, stuff2, real_flight, tracked_flight)
+    # plot_flight(tracked_flight, real_flight)                    ##plots the filtered data against the real
