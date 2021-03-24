@@ -238,7 +238,8 @@ def get_filtered_positions(flight_radar, flight_real):
                       initial_state_mean=initial_state_mean,
                       initial_state_covariance=initial_state_covariance,
                       transition_covariance=transition_covariance,
-                      n_dim_obs=4)
+                      n_dim_obs=4,
+                      n_dim_state=4)
 
     pred_state, state_cov = kf.smooth(measurements)
     xs = pred_state[:, 0]
