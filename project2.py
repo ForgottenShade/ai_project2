@@ -103,7 +103,7 @@ def get_state_k(flight, k):
     current_x = flight.data["longitude"][k] * LON_M
     current_y = flight.data["latitude"][k] * LAT_M
 
-    if (k == 0):
+    if k == 0:
         return np.array([[current_x], [current_y], [0], [0]])
     else:
         current_x_vel = (flight.data["longitude"][k] * LON_M - flight.data["longitude"][k - 1] * LON_M) / DELTA_T
@@ -115,7 +115,7 @@ def get_measurements_k(flight, k):
     current_x = flight.data["longitude"][k] * LON_M
     current_y = flight.data["latitude"][k] * LAT_M
 
-    if (k == 0):
+    if k == 0:
         return np.array([current_x, current_y, 0, 0])
     else:
         current_x_vel = (flight.data["longitude"][k] * LON_M - flight.data["longitude"][k - 1] * LON_M) / DELTA_T
@@ -130,7 +130,8 @@ def plot_flight(flight_radar, flight_real):
     plt.plot(flight_real.data["longitude"], flight_real.data["latitude"], 'k')
     plt.show()
 
-def plot_some(smoothed_x, smoothed_y, filtered_x, filtered_y, flight_real, flight_radar):
+
+def plot_all(smoothed_x, smoothed_y, filtered_x, filtered_y, flight_real, flight_radar):
     plt.plot(smoothed_x, smoothed_y, 'r')
     plt.plot(filtered_x, filtered_y, 'b')
     plt.plot(flight_radar.data["longitude"] * LON_M, flight_radar.data["latitude"] * LAT_M, 'c')
@@ -138,17 +139,7 @@ def plot_some(smoothed_x, smoothed_y, filtered_x, filtered_y, flight_real, fligh
     plt.show()
 
 
-def plot_all(smoothed_x, smoothed_y, filtered_x, filtered_y, iter_x, iter_y, ifx, ify, flight_real, flight_radar):
-    plt.plot(smoothed_x, smoothed_y, 'r')
-    plt.plot(filtered_x, filtered_y, 'b')
-    plt.plot(iter_x, iter_y, 'g')
-    plt.plot(ifx, ify, 'm')
-    plt.plot(flight_radar.data["longitude"] * LON_M, flight_radar.data["latitude"] * LAT_M, 'c')
-    plt.plot(flight_real.data["longitude"] * LON_M, flight_real.data["latitude"] * LAT_M, 'k')
-    plt.show()
-
-
-##TODO:Implement
+# TODO:Implement
 
 # State matrix setup: |   x   |
 #                     |   y   |
@@ -164,7 +155,6 @@ def get_filtered_positions(flight_radar, flight_real):
     for i in range(flight_real.data['longitude'].size):
         current_state = get_state_k(flight_real, i)
         real_states.append(current_state)
-
 
     for j in range(flight_radar.data['longitude'].size):
         current_obs = get_state_k(flight_radar, j)
@@ -222,22 +212,14 @@ def get_filtered_positions(flight_radar, flight_real):
          [DELTA_T_COV * STD_DEV ** 2, DELTA_T_COV * STD_DEV ** 2, 0, DELTA_T_COV_Mix * STD_DEV * o_std_y],
          [DELTA_T_COV_Mix * STD_DEV * o_std_x, 0, DELTA_T ** 2 * o_std_x ** 2, DELTA_T ** 2 * o_std_x * o_std_y],
          [0, DELTA_T_COV_Mix * STD_DEV * o_std_y, DELTA_T ** 2 * o_std_x * o_std_y, DELTA_T ** 2 * o_std_y ** 2]])
-    #
-    # observation_covariance = np.array([[STD_DEV ** 2, 0, 0, 0],
-    #                                    [0, STD_DEV ** 2, 0, 0],
-    #                                    [0, 0, 0, 0],
-    #                                    [0, 0, 0, 0]])
 
-    # Don't know why, but 50 seems to be the magic number... and idc why. Prob related to the obs_covar
-    # transition_covariance = np.diag([50, 50, 0, 0]) ** 2
-
-    ##Get covariance with function_base.cov()
+    # Get covariance with function_base.cov()
     # observation_data = np.stack((flight_radar.data["longitude"] * LON_M, flight_radar.data["latitude"] * LAT_M), axis=0)
     observation_matrix = np.array([[1, 0, 0, 0],  # Identity matrix   C and H?
                                    [0, 1, 0, 0],
                                    [0, 0, 1, 0],
                                    [0, 0, 0, 1]])
-    # https://youtu.be/Nfrk2UdEOcQ?t=73
+
     transition_offsets = np.dot(np.array([[0.5 * DELTA_T ** 2, 0],
                                           [0, 0.5 * DELTA_T ** 2],
                                           [DELTA_T, 0],  # purely guesswork here
@@ -277,7 +259,7 @@ def get_filtered_positions(flight_radar, flight_real):
     five_smoothed = kf.smooth(measurements)
     five_sxs = five_smoothed[0][:, 0]
     five_sys = five_smoothed[0][:, 1]
-    return smoothed_xs, smoothed_ys, filtered_xs, filtered_ys, five_sxs, five_sys, five_fxs, five_fys
+    return smoothed_xs, smoothed_ys, filtered_xs, filtered_ys
     # kf.em(measurements)
     # kf = KalmanFilter(transition_matrices=transition_matrix,
     #                   observation_matrices=observation_matrix,
@@ -298,21 +280,20 @@ if __name__ == "__main__":
     radar_data = get_radar_data()
     real_data = get_ground_truth_data()
     repeater = "y"
-    while( repeater == "y"):
+    while repeater == "y":
         for i in range(10):
-            #flight_arr_pos = 0  ##For selecting which flight in the data set to consider
-            tracked_flight = radar_data[i]
-            ##gets a singular flight to track from radar
-            real_flight = real_data[i]  ##gets a singular flight to track from real data
+            tracked_flight = radar_data[i]  # gets a singular flight to track from radar
 
-            plot_flight(tracked_flight, real_flight)
+            real_flight = real_data[i]  # gets a singular flight to track from real data
+            if i == 0:  # Just to show that the conversion doesn't affect the data
+                plot_flight(tracked_flight, real_flight)
 
-            smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, iter_five_x, iter_five_y, ifx, ify = \
-                get_filtered_positions(tracked_flight, real_flight)  ##performs the kalman filter to update predictions
+            smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y = \
+                get_filtered_positions(tracked_flight, real_flight)  # performs the kalman filter to update predictions
 
-            plot_some(smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, real_flight, tracked_flight)
-            plot_all(smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, iter_five_x, iter_five_y, ifx, ify, real_flight, tracked_flight)
+            # plots the filtered and smoothed data against the real and radar data
+            plot_all(smooth_kf_x, smooth_kf_y, filtered_kf_x, filtered_kf_y, real_flight, tracked_flight)
             i += 1
 
         repeater = input("Wanna do me again? (y/n): ")
-                      ##plots the filtered data against the real
+
