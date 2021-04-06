@@ -144,9 +144,6 @@ def plot_all(smoothed_x, smoothed_y, filtered_x, filtered_y, flight_real, flight
     plt.legend(loc="upper left")
     plt.show()
 
-
-# TODO:Implement
-
 # State matrix setup: |   x   |
 #                     |   y   |
 #                     | x_hat |
@@ -273,7 +270,6 @@ def get_filtered_positions(flight_radar, flight_real, flight, t_cov_scalar=1, o_
     smoothed_xs = smoothed[0][:, 0]
     smoothed_ys = smoothed[0][:, 1]
 
-    # TODO: Measure the error of the filtered positions. Compute the mean and max distance to the real data at delta_t
     # Currently measuring the distance between the real state points for the first flight only
     # The first flight has equal rows of observations data and real data.
     # The timestamps of the observation and real data match completely.
